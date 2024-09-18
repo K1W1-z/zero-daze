@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Define color variables
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+GRAY='\033[1;30m'
+NC='\033[0m' # No Color
+
+# Banner output at the start
+echo -e "${CYAN}┌──────────────────────────────────────────────────┐"
+echo -e "│         ZIGOLO LIGOLO PROXY SETUP SCRIPT         │"
+echo -e "└──────────────────────────────────────────────────┘${NC}"
+echo -e "${GRAY}─────────────── LIGOLO COMMAND GUIDE ───────────────"
+echo -e "session"
+echo -e "ifconfig"
+echo -e "listener_add --addr 0.0.0.0:8888 --to 127.0.0.1:8008"
+echo -e "────────────────────────────────────────────────────${NC}"
+echo -e ""
+
+# Step 1: Execute the tuntap creation command
+sudo ip tuntap add user kali mode tun ligolo
+
+# Step 2: Set the link up
+sudo ip link set ligolo up
+
+# Step 3: Prompt the user for the subnet with colored text
+echo -e "${GREEN}Please enter the subnet (e.g., 10.0.0.0/24):${NC} "
+read subnet
+
+# Step 4: Add the route using the provided subnet
+sudo ip route add $subnet dev ligolo
+
+# Step 5: Run the proxy command with selfcert
+./proxy -selfcert
+
+# Step 6: Check if the command was successful
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}Proxy command executed successfully!${NC}"
+else
+    echo -e "${CYAN}Proxy command failed!${NC}"
+fi
