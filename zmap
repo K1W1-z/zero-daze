@@ -1,0 +1,81 @@
+import subprocess
+import argparse
+import time
+import sys
+import re
+
+# ANSI color codes
+COLOR_GREEN = '\033[92m'
+COLOR_CYAN = '\033[96m'
+COLOR_INDIGO = '\033[94m'
+COLOR_PURPLE = '\033[95m'
+COLOR_RESET = '\033[0m'
+
+def run_nmap_scan(ip_address):
+    try:
+        # Define the nmap command
+        command = ['nmap', '-Pn', '-sC', '-sV', '-T4', '-p-', '--open', ip_address]
+        
+        # Execute the command in a separate process
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        
+        # Display loading prompt with dots
+        print(f"{COLOR_INDIGO}Scanning enemy", end="", flush=True)
+        while process.poll() is None:
+            print(f"{COLOR_CYAN} .", end="", flush=True)
+            time.sleep(20.0)
+        
+        # Get the output and errors
+        stdout, stderr = process.communicate()
+        
+        # Print the output
+        print(f"\n{COLOR_INDIGO}┌────────────────────────────────────────────────────────────────┐")
+        print(f"{COLOR_INDIGO}│           {COLOR_CYAN}Nmap Scan Results │ -sC -sV -T4 -p-  --open{COLOR_INDIGO}          │")
+        print(f"{COLOR_INDIGO}└────────────────────────────────────────────────────────────────┘{COLOR_RESET}")
+        
+          # Colorize the output: look for lines with "open" and color them
+        output_lines = stdout.splitlines()
+        for line in output_lines:
+            if "open" in line.lower():
+                print(f"{COLOR_GREEN}{line}{COLOR_RESET}")
+            else:
+                print(line)
+        
+        if stderr:
+            print("Errors:")
+            print(stderr)
+    
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred: {e}")
+        print("Output:", e.output)
+        print("Error:", e.stderr)
+
+def main():
+    # Create an ArgumentParser object
+    parser = argparse.ArgumentParser(
+        description="Run an nmap scan on a specified IP address."
+    )
+    
+    # Add an argument for the IP address
+    parser.add_argument(
+        'ip_address',
+        type=str,
+        help="The IP address to scan."
+    )
+    
+    # Parse command-line arguments
+    args = parser.parse_args()
+    
+    # Get the IP address from arguments
+    ip_address = args.ip_address
+    
+    # Validate IP address format (simple validation)
+    if not ip_address:
+        print("IP address cannot be empty.")
+        return
+    
+    # Run the nmap scan
+    run_nmap_scan(ip_address)
+
+if __name__ == "__main__":
+    main()
