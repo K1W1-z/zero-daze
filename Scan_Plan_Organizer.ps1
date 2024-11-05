@@ -1,27 +1,30 @@
-# Get the directory where the script is located
+# Value of the directory where the script is located
 $folderPath = $PSScriptRoot
 
-# Get the name of this script file
+# Value of the name of this script
 $scriptName = [System.IO.Path]::GetFileName($PSCommandPath)
 
-# Verify the current working directory actually exists
+# Verify the current directory actually exists
 if (Test-Path $folderPath) {
-    # Define the output file for all file names and extensions
-    # This will save the output of this script in the current working directory
+    # Define the output file (this will save the output in the same directory as the script)
     $outputFile = Join-Path -Path $folderPath -ChildPath "file_list.txt"
 
-    # Get all file names in all folders and subfolders, excluding the script file itself
+    # Value of all files in the current folder and its subfolders (this will exclude the name of the script)
     $files = Get-ChildItem -Path $folderPath -Recurse -File | Where-Object { $_.Name -ne $scriptName }
 
-    # Group files by extension
+    # Group all files by extension
     $groupedFiles = $files | Group-Object Extension
 
-    # Write the grouped file names to an output text file
+    # Write the grouped file names and their creation dates to the output file
     foreach ($group in $groupedFiles) {
-        # Write the extension header (e.g., ".txt files")
-        Add-Content -Path $outputFile -Value "`r`n$($group.Name) files:"
+        # Value of the creation date of the first file in the group (format as "dd MMMM yyyy")
+        $firstFile = $group.Group | Sort-Object CreationTime | Select-Object -First 1
+        $formattedDate = $firstFile.CreationTime.ToString('dd MMMM yyyy')
 
-        # Write each file in this extension group
+        # Output of the extension type with its creation date
+        Add-Content -Path $outputFile -Value "`r`n$($group.Name) | Created: $formattedDate"
+
+        # Write each file to its extension group
         $group.Group | ForEach-Object { Add-Content -Path $outputFile -Value $_.Name }
     }
 
