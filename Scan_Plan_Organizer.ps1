@@ -54,7 +54,7 @@ if (Test-Path $folderPath) {
         }
     }
 
-    Write-Host "File list and HOST_END results have been saved to $outputFile"
+    Write-Host "File list results have been saved to $outputFile"
 } else {
     Write-Host "The folder path does not exist."
 }
