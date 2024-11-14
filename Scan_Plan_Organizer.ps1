@@ -7,7 +7,7 @@ $scriptName = [System.IO.Path]::GetFileName($PSCommandPath)
 # Verify the current directory actually exists
 if (Test-Path $folderPath) {
     # Define the output file (this will save the output in the same directory as the script)
-    $outputFile = Join-Path -Path $folderPath -ChildPath "file_list.txt"
+    $outputFile = Join-Path -Path $folderPath -ChildPath "scans_list.txt"
 
     # Get all files in the current folder and its subfolders, excluding the script itself
     $files = Get-ChildItem -Path $folderPath -Recurse -File | Where-Object { 
