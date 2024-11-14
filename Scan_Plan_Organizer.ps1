@@ -36,13 +36,12 @@ if (Test-Path $folderPath) {
     Add-Content -Path $outputFile -Value "Found Nessus File Scan Times"
     Add-Content -Path $outputFile -Value "‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑"    
 
-    # Add the HOST_END searching functionality for .nessus files here
-    # Get all .nessus files in the current directory (and subdirectories if needed)
+    # Value of all .nessus files in the current and sub directory
     $nessusFiles = Get-ChildItem -Path $folderPath -Recurse -Filter "*.nessus" -File
 
-    # Loop through each .nessus file
+    # Parse through each .nessus file
     foreach ($file in $nessusFiles) {
-        # Read the content of the file and search for lines containing "HOST_END" but exclude "HOST_END_TIMESTAMP"
+        # Parsing lines containing "HOST_END" but exclude "HOST_END_TIMESTAMP"
         $matchingLines = Get-Content $file.FullName | Where-Object { $_ -match "HOST_END" -and $_ -notmatch "HOST_END_TIMESTAMP" }        
 
 	# If there are matching lines, extract content between >< and write them to the output file
