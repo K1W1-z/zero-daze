@@ -1,81 +1,93 @@
-import subprocess
-import argparse
-import time
-import sys
-import re
+#!/bin/bash
 
-# ANSI color codes
-COLOR_GREEN = '\033[92m'
-COLOR_CYAN = '\033[96m'
-COLOR_INDIGO = '\033[94m'
-COLOR_PURPLE = '\033[95m'
-COLOR_RESET = '\033[0m'
+# ANSI color codes for styling
+COLOR_GREEN='\033[0;32m'
+COLOR_CYAN='\033[0;36m'
+COLOR_INDIGO='\033[0;34m'
+COLOR_PURPLE='\033[0;35m'
+COLOR_RESET='\033[0m'
 
-def run_nmap_scan(ip_address):
-    try:
-        # Define the nmap command
-        command = ['nmap', '-Pn', '-sC', '-sV', '-T4', '-p-', '--open', ip_address]
-        
-        # Execute the command in a separate process
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        
-        # Display loading prompt with dots
-        print(f"{COLOR_INDIGO}Scanning enemy", end="", flush=True)
-        while process.poll() is None:
-            print(f"{COLOR_CYAN} .", end="", flush=True)
-            time.sleep(20.0)
-        
-        # Get the output and errors
-        stdout, stderr = process.communicate()
-        
-        # Print the output
-        print(f"\n{COLOR_INDIGO}┌────────────────────────────────────────────────────────────────┐")
-        print(f"{COLOR_INDIGO}│           {COLOR_CYAN}Nmap Scan Results │ -sC -sV -T4 -p-  --open{COLOR_INDIGO}          │")
-        print(f"{COLOR_INDIGO}└────────────────────────────────────────────────────────────────┘{COLOR_RESET}")
-        
-          # Colorize the output: look for lines with "open" and color them
-        output_lines = stdout.splitlines()
-        for line in output_lines:
-            if "open" in line.lower():
-                print(f"{COLOR_GREEN}{line}{COLOR_RESET}")
-            else:
-                print(line)
-        
-        if stderr:
-            print("Errors:")
-            print(stderr)
-    
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred: {e}")
-        print("Output:", e.output)
-        print("Error:", e.stderr)
+# Function to run the nmap scan
+run_nmap_scan() {
+    local command="$1"
 
-def main():
-    # Create an ArgumentParser object
-    parser = argparse.ArgumentParser(
-        description="Run an nmap scan on a specified IP address."
-    )
-    
-    # Add an argument for the IP address
-    parser.add_argument(
-        'ip_address',
-        type=str,
-        help="The IP address to scan."
-    )
-    
-    # Parse command-line arguments
-    args = parser.parse_args()
-    
-    # Get the IP address from arguments
-    ip_address = args.ip_address
-    
-    # Validate IP address format (simple validation)
-    if not ip_address:
-        print("IP address cannot be empty.")
-        return
-    
-    # Run the nmap scan
-    run_nmap_scan(ip_address)
+    # Display a loading prompt with dots
+    echo -ne "${COLOR_INDIGO}Scanning enemy${COLOR_CYAN}"
 
-if __name__ == "__main__":
-    main()
+    # Append dots continuously while nmap is running
+    while sleep 5; do
+    echo -n " ."
+	if ! ps aux | grep -v grep | grep nmap > /dev/null; then
+           # nmap is not running
+    	   break
+	fi
+    done
+
+    echo -e "${COLOR_RESET}"  # Reset the color and move to the next line
+
+    # Execute the nmap command and capture the output
+    nmap_output=$(${command} 2>&1)
+
+    # Print the scan result header
+    echo -e "\n${COLOR_INDIGO}┌────────────────────────────────────────────────────────────────┐"
+    echo -e "│           ${COLOR_CYAN}Nmap Scan Results │ ${command}${COLOR_INDIGO}          │"
+    echo -e "└────────────────────────────────────────────────────────────────┘${COLOR_RESET}"
+
+    # Print and highlight "open" ports in green
+    while IFS= read -r line; do
+        if [[ "$line" == *"open"* ]]; then
+            echo -e "${COLOR_GREEN}${line}${COLOR_RESET}"
+        else
+            echo "$line"
+        fi
+    done <<< "$nmap_output"
+}
+
+# Main function
+main() {
+    # Prompt the user for the IP address
+    echo -ne "${COLOR_PURPLE}Please enter the IP address to scan: ${COLOR_RESET}"
+    read ip_address
+
+    # Validate IP address (basic validation)
+    if [[ -z "$ip_address" ]]; then
+        echo "IP address cannot be empty."
+        exit 1
+    fi
+
+    # Prompt the user to select a scan type
+    echo -e "${COLOR_CYAN}Please select a scan type:${COLOR_RESET}"
+    echo "1) nmap -sC -sV -T4 $ip_address"
+    echo "2) nmap -sC -sV -T4 -p- --open $ip_address"
+    echo "3) Choice 2 + -Pn"
+    echo "4) nmap -sC -sV -T4 -O -p- --script=vuln --open $ip_address"
+    
+    echo -ne "${COLOR_PURPLE}Enter your choice (1, 2, 3, or 4): ${COLOR_RESET}"
+    read choice
+
+    # Validate the user's choice and run the corresponding command
+    case $choice in
+        1)
+            command="nmap -sC -sV -T4 $ip_address"
+            ;;
+        2)
+            command="nmap -sC -sV -T4 -p- --open $ip_address"
+            ;;
+	3)
+	    command="nmap -sC -sV -T4 -p- --open -Pn $ip_address"
+	    ;;
+        4)
+            command="nmap -sC -sV -T4 -O -p- --script=vuln --open $ip_address"
+            ;;
+        *)
+            echo "Invalid choice. Exiting."
+            exit 1
+            ;;
+    esac
+
+    # Run the selected nmap scan
+    run_nmap_scan "$command"
+}
+
+# Run the main function
+main
